@@ -45,11 +45,11 @@ test('DMG checksum, Applications shortcut, signed app and image helper survive p
     assert.equal(bundleVersion.trim(), version);
     const resources = join(bundle, 'Contents/Resources');
     await access(join(resources, 'THIRD_PARTY_NOTICES.md'));
-    await access(join(resources, 'LICENSES.chromium.html'));
+    await access(join(resources, 'licenses/SwiftTerm.txt'));
     await access(join(resources, 'licenses/xterm.txt'));
-    const { stdout } = await run(join(resources, 'app/bin/veil'), ['image', join(resources, 'electron.icns')]);
+    const { stdout } = await run(join(resources, 'bin/veil'), ['image', join(resources, 'veil.icns')]);
     assert.match(stdout, /\x1b\[38;2;/);
-    const { stdout: blurBuild } = await run('xcrun', ['vtool', '-show-build', join(resources, 'app/native/veil_blur.node')]);
+    const { stdout: blurBuild } = await run('xcrun', ['vtool', '-show-build', join(bundle, 'Contents/MacOS/VeilNative')]);
     assert.match(blurBuild, /minos 12\.0/);
   } finally {
     // Never recurse into a mounted image if detach fails.

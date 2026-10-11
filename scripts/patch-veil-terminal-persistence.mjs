@@ -4,14 +4,8 @@ import { createRequire } from 'node:module';
 const {TUNING,valid,overlap,target} = createRequire(import.meta.url)('../electron/pip-geometry.cjs');
 
 const rendererPath = join(
-  process.cwd(),
-  "release",
-  "Veil Terminal.app",
-  "Contents",
-  "Resources",
-  "app",
-  "dist",
-  "client",
+  process.env.VEIL_CLIENT_ROOT || join(process.cwd(), "release", "Veil Terminal.app", "Contents", "Resources",
+    "app", "dist", "client"),
   "assets",
   "index-C7zerVBL.js",
 );

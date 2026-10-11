@@ -7,8 +7,9 @@ const {installPiP}=require('../electron/pip-docking.cjs');
 const rect={x:0,y:0,width:400,height:300};
 test('packaged app and PiP helper retain stable separate Accessibility identities',()=>{
   const {execFileSync}=require('node:child_process'),{resolve}=require('node:path');
-  const app=resolve(__dirname,'../release/Veil Terminal.app');
-  for(const [file,id] of [[app,'com.veilterminal.app'],[app+'/Contents/Resources/app/native/veil-pip','com.veilterminal.pip']]){
+  const native=process.env.VEIL_TEST_NATIVE==='1'&&process.env.VEIL_TEST_STABLE!=='1';
+  const app=resolve(__dirname,native?'../release/Veil Native.app':'../release/Veil Terminal.app');
+  for(const [file,id] of [[app,native?'com.veilterminal.webkit-development':'com.veilterminal.app'],[app+(process.env.VEIL_TEST_NATIVE==='1'?'/Contents/Resources/bin/veil-pip':'/Contents/Resources/app/native/veil-pip'),'com.veilterminal.pip']]){
     // codesign splits executable diagnostics and requirements across streams.
     const result=require('node:child_process').spawnSync('codesign',['-d','-r-',file],{encoding:'utf8'});
     assert.equal(result.status,0,result.stderr);

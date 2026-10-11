@@ -10,7 +10,7 @@ import pty from "node-pty";
 
 const runFile = promisify(execFile);
 const veil = new URL("../bin/veil", import.meta.url).pathname;
-const sampleImage = fileURLToPath(new URL("../release/Veil Terminal.app/Contents/Resources/electron.icns", import.meta.url));
+const sampleImage = fileURLToPath(new URL("../assets/veil.icns", import.meta.url));
 const animatedGif = fileURLToPath(new URL("./fixtures/animated.gif", import.meta.url));
 
 function value(config, key) {

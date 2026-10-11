@@ -1,7 +1,7 @@
 {
   "name": "veil-terminal",
   "productName": "Veil Terminal",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Minimal macOS terminal with real transparency, native background blur, tabs, splits, live config and color ASCII images/GIFs.",
   "private": true,
   "author": "roxvihaan",
@@ -11,16 +11,19 @@
   "engines": { "node": ">=22.12.0" },
   "scripts": {
     "postinstall": "node node_modules/electron/install.js && node scripts/fix-node-pty.mjs",
-    "package:mac": "node scripts/package-mac.mjs",
+    "package:mac": "node scripts/package-native.mjs --stable",
     "package:dmg": "npm run package:mac && node scripts/package-dmg.mjs",
     "build:veil-image": "node scripts/build-veil-image.mjs",
-    "test": "npm run test:commands && npm run test:neofetch && npm run test:latency && npm run test:sizing && npm run test:pip",
+    "test": "npm run test:commands && npm run test:neofetch && VEIL_TEST_NATIVE=1 VEIL_TEST_STABLE=1 node --test tests/pip.test.cjs tests/image-drop.test.cjs tests/terminal-latency.test.mjs && VEIL_WEB_TEST_APP='release/Veil Terminal.app' npm run test:web-native",
     "test:pip": "node --test tests/pip.test.cjs tests/image-drop.test.cjs && electron tests/pip-renderer.electron.cjs",
     "test:commands": "node --test tests/veil-command.test.mjs tests/reminders.test.mjs tests/imessage.test.mjs tests/spotify.test.mjs tests/contacts.test.mjs",
     "test:neofetch": "node --test tests/neofetch-image.test.mjs",
     "test:latency": "node --test tests/terminal-latency.test.mjs",
     "test:sizing": "electron tests/veil-sizing.electron.cjs",
-    "test:dmg": "node --test tests/dmg.test.mjs"
+    "test:dmg": "node --test tests/dmg.test.mjs",
+    "test:native": "node scripts/test-native.mjs",
+    "test:web-native": "node scripts/test-web-native.mjs",
+    "package:native": "node scripts/package-native.mjs"
   },
   "dependencies": { "node-pty": "1.1.0", "node-addon-api": "7.1.1" },
   "devDependencies": { "electron": "43.4.1", "node-gyp": "^11.0.0" }

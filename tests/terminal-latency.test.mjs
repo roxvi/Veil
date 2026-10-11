@@ -108,14 +108,16 @@ test("login PTY supports normal macOS terminal commands", async (context) => {
 });
 
 test("transparent terminal keeps the low-latency renderer path", async () => {
-  const packaged = new URL("../release/Veil Terminal.app/Contents/Resources/app/", import.meta.url);
+  const native = process.env.VEIL_TEST_NATIVE === "1";
+  const packaged = new URL(native ? (process.env.VEIL_TEST_STABLE==='1'?"../release/Veil Terminal.app/Contents/Resources/":"../release/Veil Native.app/Contents/Resources/") : "../release/Veil Terminal.app/Contents/Resources/app/", import.meta.url);
+  const client = native ? "client/" : "dist/client/";
   const [renderer, styles, splitSizing, manifest, main, infoPlist] = await Promise.all([
-    readFile(new URL("dist/client/assets/index-C7zerVBL.js", packaged), "utf8"),
-    readFile(new URL("dist/client/assets/index-C4HyK4AY.css", packaged), "utf8"),
-    readFile(new URL("dist/client/split-sizing.css", packaged), "utf8"),
-    readFile(new URL("package.json", packaged), "utf8"),
-    readFile(new URL("electron/main.cjs", packaged), "utf8"),
-    readFile(new URL("../../Info.plist", packaged), "utf8"),
+    readFile(new URL(client + "assets/index-C7zerVBL.js", packaged), "utf8"),
+    readFile(new URL(client + "assets/index-C4HyK4AY.css", packaged), "utf8"),
+    readFile(new URL(client + "split-sizing.css", packaged), "utf8"),
+    readFile(native ? new URL("../package.json", import.meta.url) : new URL("package.json", packaged), "utf8"),
+    readFile(native ? new URL("../macOS/Sources/VeilNative/WebSession.swift", import.meta.url) : new URL("electron/main.cjs", packaged), "utf8"),
+    readFile(new URL(native ? "../Info.plist" : "../../Info.plist", packaged), "utf8"),
   ]);
   const appWindowRule = styles.match(/\.app-window\s*\{([^}]+)\}/s)?.[1] || "";
 
@@ -138,6 +140,33 @@ test("transparent terminal keeps the low-latency renderer path", async () => {
   assert.match(renderer, /entry\.id=created\.id;[\s\S]*window\.veil\.resizeTerminal\(entry\.id,terminal\.cols,terminal\.rows\)/, "PTY size must be resynchronized after async creation");
   assert.match(splitSizing, /\.terminal-pane \.xterm\s*\{[^}]*padding:\s*var\(--terminal-pad-y\) var\(--terminal-pad-x\)/s, "xterm must own terminal padding so FitAddon subtracts it from rows and columns");
   assert.doesNotMatch(styles, /\.app-window\.is-liquid::before/, "liquid blur must stay out of the renderer paint path");
+  if (native) {
+    const [host, environment, appearance, bridge] = await Promise.all([
+      readFile(new URL("../macOS/Sources/VeilNative/WebApp.swift", import.meta.url), "utf8"),
+      readFile(new URL("../macOS/Sources/VeilCore/ShellEnvironment.swift", import.meta.url), "utf8"),
+      readFile(new URL("../macOS/Sources/VeilNative/Appearance.swift", import.meta.url), "utf8"),
+      readFile(new URL("client/native-bridge.js", packaged), "utf8"),
+    ]);
+    assert.match(main, /asyncAfter\(deadline: \.now\(\) \+ \.milliseconds\(4\)/, "native redraw bursts must be batched for no more than 4ms");
+    assert.match(main, /guard ready, timer == nil else/, "output must not postpone an existing batching deadline");
+    assert.match(main, /pending\.count >= 65536 \{ flush\(\); return \}/, "large output must bypass the coalescing delay");
+    assert.match(main, /args: ShellEnvironment\.arguments\(for: shell\)/, "native PTYs must use login-shell arguments");
+    assert.match(environment, /return \["-l", "-i"\]/, "normal shells must be interactive login shells");
+    assert.match(environment, /getpwuid\(getuid\(\)\)/, "Finder launches must honor the account shell");
+    assert.ok(environment.includes('/.local/bin'), "user-installed CLIs must be on PATH");
+    assert.match(environment, /"\/opt\/homebrew\/bin"/, "Apple Silicon Homebrew must be on PATH");
+    assert.match(environment, /result\["TERM_PROGRAM_VERSION"\].*CFBundleShortVersionString/, "PTYs must receive the bundle version");
+    assert.match(host, /env\["TERM_SESSION_ID"\] = "Veil-/, "each native PTY must have a stable session identifier");
+    assert.match(host, /application\(_ sender: NSApplication, open urls: \[URL\]\)/, "native open events must reach Veil");
+    assert.match(host, /targets\.removeFirst\(\)/, "opened items must become launch requests");
+    assert.match(host, /session\.send\("command vim -- /, "opened files must launch the terminal editor");
+    assert.match(appearance, /CGSSetWindowBackgroundBlurRadius/, "Liquid must apply native background blur");
+    assert.match(host, /effects\["glass-opacity"\] = "0"/, "the native backing view must not stack a second tint");
+    assert.match(bridge, /Uint8Array\.from\(atob\(payload\.base64\)/, "byte transport must preserve split UTF-8 sequences");
+    assert.match(bridge, /terminal:ready/, "initial shell output must wait for the renderer session id");
+    assert.ok(infoPlist.includes(process.env.VEIL_TEST_STABLE==='1'?'com.veilterminal.app':'com.veilterminal.webkit-development'), "bundle identity matches release channel");
+    assert.match(infoPlist, /<string>public\.app-category\.developer-tools<\/string>/, "the native app must remain a developer tool");
+  } else {
   assert.match(main, /mode === "liquid"/, "only Liquid may use native glass");
   assert.doesNotMatch(main, /mode === "frost" \|\|/, "Frosted mode must not remain active");
   assert.match(main, /nativeBlur\?\.apply\(mainWindow\.getNativeWindowHandle\(\), blurRadius\)/, "Liquid must apply tintless blur to the clear native window");
@@ -162,4 +191,5 @@ test("transparent terminal keeps the low-latency renderer path", async () => {
   assert.match(infoPlist, /<string>Terminal, Shell, Command Line, Developer Tool<\/string>/, "Spotlight must classify Veil as a terminal developer tool");
   assert.match(infoPlist, /<string>veil<\/string>/, "Veil must register its URL scheme");
   assert.doesNotMatch(main, /new BrowserWindow\([\s\S]+new BrowserWindow\(/, "a second backing window breaks Frosted and Liquid window behavior");
+  }
 });

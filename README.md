@@ -4,7 +4,7 @@
 
 A minimal macOS terminal with real desktop transparency, blurred Liquid mode, live config commands, tabs, splits, color ASCII images and GIF playback. An optional Neofetch extension remembers a custom image as your default logo.
 
-Veil uses an Electron macOS window, xterm.js and real pseudo-terminal sessions. It is a terminal emulator, not a simulated command prompt.
+Veil 0.2 uses a native AppKit host, system WebKit, the familiar React/xterm.js UI and real pseudo-terminal sessions. The downloaded app contains no Electron or Node runtime. It is a terminal emulator, not a simulated command prompt.
 
 ![Veil Terminal showing its live command interface](screenshots/veil-terminal.png)
 
@@ -18,9 +18,9 @@ CLI — coming soon.
 
 Open [Releases](https://github.com/roxvihaan/Veil/releases) and download the `.dmg` under **Assets** for the version you want.
 
-Download [Veil 0.1.4 for Apple Silicon](https://github.com/roxvihaan/Veil/releases/download/v0.1.4/Veil-0.1.4-arm64.dmg). It opens a large installer window with two big icons, an arrow, and **Drag Veil to Applications** instructions. Drag the Veil icon onto the Applications folder, eject the disk image, then launch Veil from Applications. No Node.js, npm or compiler is needed for the downloaded app.
+Download [Veil 0.2.0 for Apple Silicon](https://github.com/roxvihaan/Veil/releases/download/v0.2.0/Veil-0.2.0-arm64.dmg). It opens a large installer window with two big icons, an arrow, and **Drag Veil to Applications** instructions. Drag the Veil icon onto the Applications folder, eject the disk image, then launch Veil from Applications. No Node.js, npm or compiler is needed for the downloaded app.
 
-This release is **Apple Silicon only** (M1 or newer), targets macOS 12 or newer, and has been tested on macOS 26.5.1. Intel is not included. The [release page](https://github.com/roxvihaan/Veil/releases/tag/v0.1.4) also includes a SHA-256 checksum file.
+This release is **Apple Silicon only** (M1 or newer), targets macOS 12 or newer, and has been tested on macOS 26.5.1. Intel is not included. The [release page](https://github.com/roxvihaan/Veil/releases/tag/v0.2.0) also includes a SHA-256 checksum file.
 
 **First-launch security:** this release is ad-hoc signed, not Developer ID notarized. macOS may block the initial launch. Only if you trust this source, follow [Apple's instructions for approving an unnotarized app](https://support.apple.com/en-us/102445) in System Settings → Privacy & Security → Open Anyway after attempting to open it. Do not disable Gatekeeper or remove quarantine globally. This distribution does not change your security settings.
 
@@ -44,7 +44,7 @@ Save your terminal work and quit Veil before upgrading or uninstalling. Normal u
 
 ### Build from this repository
 
-Requirements: macOS, **Node.js 22.12 or newer**, npm, Git and Xcode Command Line Tools. Run `xcode-select --install` if the command-line tools are not installed. Apple Silicon is the tested architecture; Intel builds have not been verified.
+Requirements: macOS, **Node.js 22.12 or newer**, npm, Git and full Xcode with Swift 6.2 or newer. Apple Silicon is the tested architecture; Intel builds have not been verified. The build scripts default to `/Applications/Xcode.app/Contents/Developer`.
 
 ```sh
 git clone https://github.com/roxvihaan/Veil.git
@@ -53,7 +53,7 @@ npm ci
 npm run package:mac
 ```
 
-The first install/build downloads Electron and matching native headers, so it needs an internet connection. Packaging compiles the blur and image modules, bundles the terminal, applies the current sizing/lifecycle patch, and ad-hoc signs and verifies the app. It creates `release/Veil Terminal.app`; it does not modify an installed copy in Applications.
+The first install/build needs internet access for dependencies. Legacy Electron development tools remain in the repository but are not shipped. Packaging builds the Swift host and native helpers, bundles the existing UI and fonts, and ad-hoc signs and verifies the app. It creates `release/Veil Terminal.app`; it does not modify an installed copy in Applications. Existing config and profiles remain compatible; the 0.1.4 release remains available for rollback.
 
 ### Install the app bundle
 
@@ -73,7 +73,7 @@ If replacing an existing installation, save your work and quit Veil first. Confi
 Inside Veil, its bundled `bin` directory is already on `PATH`. To expose the same command in another shell, add this to that shell's startup file, adjusting the app path if necessary:
 
 ```sh
-export PATH="/Applications/Veil Terminal.app/Contents/Resources/app/bin:$HOME/.local/bin:$PATH"
+export PATH="/Applications/Veil Terminal.app/Contents/Resources/bin:$HOME/.local/bin:$PATH"
 ```
 
 The `veil` command changes appearance or renders images. It is not the application launcher; use `open -a "Veil Terminal"` to launch the app.
@@ -87,7 +87,7 @@ From a checkout containing `Neofetch/neofetch`, with Veil installed in Applicati
 ```sh
 mkdir -p "$HOME/.local/bin" "$HOME/.local/libexec/veil"
 install -m 755 Neofetch/neofetch "$HOME/.local/bin/neofetch"
-install -m 755 "/Applications/Veil Terminal.app/Contents/Resources/app/bin/veil-image" \
+install -m 755 "/Applications/Veil Terminal.app/Contents/Resources/bin/veil-image" \
   "$HOME/.local/libexec/veil/veil-image"
 ```
 
@@ -118,7 +118,7 @@ For ASCII, drop one image or GIF file onto a terminal at an empty shell prompt. 
 
 After a successful file drop, hover over that pane and use **Move image / GIF** to float it. Drag the small header into a cleared PiP split or leave it floating within Veil. Drag its bottom-right corner to resize; **Return to split** or Escape returns it to its original pane. This moves the *whole terminal pane* containing the ASCII, retaining its PTY, scrollback and GIF state—not individual characters or a screenshot. Floating media is hidden when its tab is inactive.
 
-External PiP support is experimental: automated docking/layout/session tests pass and live Dia PiP discovery/selection was checked, but end-to-end native dragging, sizing constraints and multi-display behavior still need verification. Dia retains control of its native drag; Veil previews during dragging and animates into place after release rather than fighting the source app by moving the window under the pointer. Edge-created splits are not supported; create an empty split first. These features require a new local build; existing release DMGs are unchanged. See [implementation and tuning](docs/pip-docking.md).
+External PiP support is experimental: automated docking/layout/session tests pass and live Dia PiP discovery/selection was checked, but end-to-end native dragging, sizing constraints and multi-display behavior still need verification. Dia retains control of its native drag; Veil previews during dragging and animates into place after release rather than fighting the source app by moving the window under the pointer. Edge-created splits are not supported; create an empty split first. See the release notes for remaining native-host verification gaps. See [implementation and tuning](docs/pip-docking.md).
 
 ### Apple Reminders
 
@@ -229,7 +229,7 @@ Both modes accept whole numbers **1–100**. Higher values are more transparent;
 
 For a completely opaque window, set `transparent = false` in the config. A later `veil clear` or `veil liquid` command enables transparency again. `veil default` and `veil deafault` restore all appearance controls described below in one update; unrelated operational entries such as your shell and padding are preserved.
 
-Liquid uses a small native module to blur behind the window. It relies on a private macOS window-server API; when that API is unavailable, Veil falls back to Electron vibrancy, which may have a different tint. This is Veil's blur mode, not a claim to implement Apple's system Liquid Glass material.
+Liquid uses native behind-window blur. It relies on a private macOS window-server API; when unavailable, Veil falls back to AppKit vibrancy, which may have a different tint. This is Veil's blur mode, not a claim to implement Apple's system Liquid Glass material.
 
 ### Background tint color
 
@@ -449,12 +449,12 @@ npm run package:mac
 npm test
 ```
 
-Individual suites are `test:commands`, `test:neofetch`, `test:latency` and `test:sizing`. The sizing suite runs an isolated Electron window against the packaged renderer, checking full-height output, font changes, tab activation, splits and retained text. Tests do not use live user sessions or modify the user's config. Optional Homebrew/Codex lookup probes report when those tools are not installed; they are not installation requirements for Veil.
+`npm test` checks commands, Neofetch, PiP, image drops, batching and the packaged WebKit/PTY interface. Keep the Mac unlocked for graphical tests. `npm run test:web-native` builds the development host; `npm run package:native` builds a separate preview. Legacy Electron-only sizing tests remain available for the historical host. Tests use isolated config and do not restart live user sessions.
 
 `npm run package:mac` signs the generated bundle automatically. If you subsequently edit that bundle directly, re-sign the local development copy:
 
 ```sh
-codesign --force --deep --sign - "release/Veil Terminal.app"
+codesign --force --sign - --identifier com.veilterminal.app --requirements '=designated => identifier "com.veilterminal.app"' "release/Veil Terminal.app"
 codesign --verify --deep --strict "release/Veil Terminal.app"
 ```
 

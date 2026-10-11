@@ -5,7 +5,7 @@ Veil's current binary distribution is Apple Silicon only. The app is ad-hoc sign
 ## Build and verify
 
 1. Start from a clean, reviewed checkout on Apple Silicon macOS. DMG packaging also needs Python 3.10+ with `venv` and `pip`; its pinned Python packages are isolated in `.cache/dmg-venv`.
-2. Bump the version in `package.json`, both root version fields in `package-lock.json`, and the template version in `assets/Info.plist`. Packaging synchronizes the bundle version from `package.json`.
+2. Bump the version in `package.json` and both root version fields in `package-lock.json`. Native packaging synchronizes the bundle version from `package.json`; `macOS/Info.plist` is the native template. Full Xcode with Swift 6.2+ is required.
 3. Run `npm ci`, `npm run package:dmg`, `npm test`, and `npm run test:dmg`.
 4. Open the DMG in Finder and verify the large installer window, background, drag arrow and actual icon positions. The automated DMG test also validates `.DS_Store` layout and 1x/2x artwork. Eject after checking; do not drag over an existing installed app during QA.
 5. Review the generated `release/Veil-<version>-arm64.dmg.sha256`. Keep the DMG out of source commits.

@@ -2,10 +2,14 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const rendererPath = join(
-  process.cwd(), "release", "Veil Terminal.app", "Contents", "Resources",
-  "app", "dist", "client", "assets", "index-C7zerVBL.js",
+  process.env.VEIL_CLIENT_ROOT || join(process.cwd(), "release", "Veil Terminal.app", "Contents", "Resources",
+    "app", "dist", "client"),
+  "assets", "index-C7zerVBL.js",
 );
 let source = await readFile(rendererPath, "utf8");
+// The recovered bundle lost the local enum declaration in DECRQM. Class
+// methods are strict: Vim's mode query otherwise throws and stalls writes.
+source = source.replace("requestMode(t,s){(k=>", "requestMode(t,s){let n;(k=>");
 const start = source.indexOf("function Bg(t){");
 const end = source.indexOf("function Wb(t,s){t.write(s)}", start);
 if (start === -1 || end === -1) throw new Error("Could not locate Veil's terminal appearance factory");

@@ -26,5 +26,5 @@ export async function patchBackground(clientRoot) {
   await writeFile(stylesPath, styles);
 }
 
-await patchBackground(resolve(import.meta.dirname, '../release/Veil Terminal.app/Contents/Resources/app/dist/client'));
+await patchBackground(process.env.VEIL_CLIENT_ROOT || resolve(import.meta.dirname, '../release/Veil Terminal.app/Contents/Resources/app/dist/client'));
 console.log('Patched Veil background tint');

@@ -2,6 +2,11 @@
 
 This repository contains only Veil. Do not mix it with other utilities from the parent workspace.
 
+- Native migration: the user authorized publishing the native host on 2026-10-11 after waiving the remaining physical drag/PiP lifecycle, cold-launch/standalone and visual glass/installation checks. Record these as waived, never passed. Preserve installed sessions/config and prior versioned releases for rollback. Track evidence in `macOS/MIGRATION.md`.
+- Preserve the familiar Electron UI appearance during migration; the native redesign is not the accepted visual direction. Keep tabs discoverable with a visible new-tab action, and clicking a split must transfer keyboard focus and remember that split when returning to its tab.
+- The migration direction is a native AppKit host with WKWebView reusing the shipped React/xterm renderer, not the AppKit terminal redesign. Preserve shared PiP/media UI and CLI contracts; do not bundle Electron or Node. Packaged startup must use bundled resources, never probe development source directories for fonts.
+- The user approved the restored WKWebView preview appearance on 2026-10-10; retain this UI while completing compatibility checks.
+
 - External PiP docking supports any app exposing movable/resizable windows through macOS Accessibility, not just Dia. Link the explicitly selected external window to an empty split without capturing video or reparenting it. Preserve playback, release the link when its pane disappears, and keep Accessibility work outside the PTY process. Never auto-select a main app window; label candidates with app, title, and size.
 - Draggable ASCII images/GIFs must preserve their existing terminal session and animation state; no screenshots or restarting commands to simulate moving content.
 - `veil pip bound` (and plain `veil pip`) retains split-fitting behavior. `veil pip unbound` follows the target split's center but keeps the external PiP size independent, including when it extends beyond the split; never resize the split or write native size attributes in unbound mode.
