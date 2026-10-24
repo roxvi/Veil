@@ -59,7 +59,8 @@ if [ "$1" = "messages" ] || [ "$1" = "imessage" ]; then
 fi
 
 # Native integrations stay independent from appearance configuration.
-if [ "$1" = "image" ] || [ "$1" = "reminders" ] || [ "$1" = "imessage" ] || [ "$1" = "spotify" ] || [ "$1" = "contacts" ]; then
+case "$1" in
+image|reminders|imessage|spotify|contacts)
   helper="veil-$1"
   if [ "$1" = "image" ]; then [ "$#" -eq 2 ] || fail_usage; fi
   script_path="$0"
@@ -83,7 +84,8 @@ if [ "$1" = "image" ] || [ "$1" = "reminders" ] || [ "$1" = "imessage" ] || [ "$
   fi
   shift
   exec "${script_dir}/${helper}" "$@"
-fi
+  ;;
+esac
 
 config_root="${XDG_CONFIG_HOME:-${HOME}/.config}"
 config_dir="${config_root}/veil"

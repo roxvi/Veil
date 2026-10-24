@@ -58,7 +58,7 @@ function installPiP(win,ipcMain,spawnHelper=spawn) {
     }
     if(m.escape){release();previous=m;return;}
     const r=m.rect,old=previous;
-    // Only a press that began inside the selected Dia window is its drag.
+    // Only a press that began inside the selected window is its drag.
     if(m.down&&!old?.down){
       const p=m.pointer;
       if(p.x>=r.x&&p.x<=r.x+r.width&&p.y>=r.y&&p.y<=r.y+r.height){
@@ -95,7 +95,7 @@ function installPiP(win,ipcMain,spawnHelper=spawn) {
     if(mode==='bound'&&linked&&!m.down&&!timer&&!clampReported&&Date.now()-lastWrite>300){
       const to=destination();
       if(to&&(distance(r,to)>2||Math.abs(r.width-to.width)>2||Math.abs(r.height-to.height)>2)){
-        // Respect a size that Dia clamps rather than hammering AX forever.
+        // Respect a size that the source app clamps rather than hammering AX forever.
         clampReported=true;selected.aspect=r.width/r.height;
         if(r.width<to.width-2)selected.maxWidth=r.width;
         send({type:'resize-pane',paneId:linked,width:r.width+2*TUNING.boundPadding,height:r.height+2*TUNING.boundPadding});
@@ -120,6 +120,7 @@ function installPiP(win,ipcMain,spawnHelper=spawn) {
     child.on('error',()=>{if(helper===child){stop();send({type:'error',message:'PiP helper unavailable. Use a packaged macOS build.'});}});
     child.on('exit',()=>{if(helper===child){helper=null;release();selected=null;previous=null;}});
   }
+  function sync(){if(linked&&!drag&&!timer){const to=destination();if(to)move(to);}}
   const handlers={
     'pip:action':(_event,m)=>{
       if(m?.op==='start')start(m.prompt===true);
@@ -140,7 +141,7 @@ function installPiP(win,ipcMain,spawnHelper=spawn) {
         else if(!p||p.type!=='empty')pending=null;
       }
       if(linked&&(!pane(linked)||pane(linked).type!=='external-pip'))release();
-      if(linked&&!drag&&!timer){const to=destination();if(to)move(to);}
+      sync();
     },
   };
   const listeners=[];
@@ -148,7 +149,6 @@ function installPiP(win,ipcMain,spawnHelper=spawn) {
     const listener=(event,payload)=>{if(event.sender===win.webContents)handler(event,payload);};
     ipcMain.on(channel,listener);listeners.push([channel,listener]);
   }
-  const sync=()=>{if(linked&&!drag&&!timer){const to=destination();if(to)move(to);}};
   win.on('move',sync);win.on('resize',sync);win.on('minimize',stop);win.on('hide',stop);
   win.webContents.on('did-start-loading',stop);
   win.once('closed',()=>{clearInterval(timer);helper?.kill();for(const [c,l] of listeners)ipcMain.removeListener(c,l);});

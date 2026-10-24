@@ -1,7 +1,7 @@
 {
   "name": "veil-terminal",
   "productName": "Veil Terminal",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Minimal macOS terminal with real transparency, native background blur, tabs, splits, live config and color ASCII images/GIFs.",
   "private": true,
   "author": "roxvihaan",
